@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:app_escalada/services/audio/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_svg/svg.dart';
@@ -10,15 +11,15 @@ import 'package:app_escalada/models/entrenamiento_detalles_model.dart';
 import 'package:app_escalada/pages/pagina_principal.dart';
 import 'package:app_escalada/services/db/db_datos.dart';
 import 'package:app_escalada/services/db/db_entrenamiento_detalles.dart';
-import 'package:app_escalada/widgets/appBarCustom.dart';
+import 'package:app_escalada/widgets/app_bar_custom.dart';
 
 class EntrenamientoIsometricoPage extends StatefulWidget {
   final EntrenamientoDetalles detalles;
 
   final ble = GetIt.I<Ble>();
+  final AudioService audioService = GetIt.I<AudioService>();
 
-  EntrenamientoIsometricoPage({Key? key, required this.detalles})
-    : super(key: key);
+  EntrenamientoIsometricoPage({super.key, required this.detalles});
 
   @override
   EntrenamientoIsometricoPageState createState() =>
@@ -78,14 +79,39 @@ class EntrenamientoIsometricoPageState
     });
   }
 
-  void _startTimer() {
+  Future<void> _startTimer() async {
     _countdownTimer?.cancel();
 
     _countdownTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
       setState(() {
         if (_timer > 0.0) {
+          double oldTimer = _timer;
           _timer -= 0.1;
           if (_timer < 0) _timer = 0;
+
+          if (oldTimer.floor() != _timer.floor()) {
+            int t = _timer.floor();
+            switch (t) {
+              case 5:
+                widget.audioService.playFive();
+                break;
+              case 4:
+                widget.audioService.playFour();
+                break;
+              case 3:
+                widget.audioService.playThree();
+                break;
+              case 2:
+                widget.audioService.playTwo();
+                break;
+              case 1:
+                widget.audioService.playOne();
+                break;
+              case 0:
+                widget.audioService.playRest();
+                break;
+            }
+          }
         } else {
           _countdownTimer?.cancel();
           avanzarRepeticion();
@@ -116,7 +142,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
-  List<LineChartBarData> _getColoredSegments() {
+  List<LineChartBarData> _colorearSegmentos() {
     List<LineChartBarData> barDataList = [];
 
     for (int i = 0; i < spots.length - 1; i++) {
@@ -199,37 +225,55 @@ class EntrenamientoIsometricoPageState
   void _startCuentaAtras() {
     _cuentaAtras = 5;
 
-    _cuentaAtrasTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+    widget.audioService.playFive();
+
+    _cuentaAtrasTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
       if (!mounted) {
         timer.cancel();
         return;
       }
 
-      if (_cuentaAtras > 1) {
+      if (_cuentaAtras > 0) {
         setState(() {
           _cuentaAtras--;
         });
+
+        switch (_cuentaAtras) {
+          case 5:
+            await widget.audioService.playFive();
+            break;
+          case 4:
+            await widget.audioService.playFour();
+            break;
+          case 3:
+            await widget.audioService.playThree();
+            break;
+          case 2:
+            await widget.audioService.playTwo();
+            break;
+          case 1:
+            await widget.audioService.playOne();
+            break;
+          case 0:
+            await widget.audioService.playGo();
+            break;
+        }
       } else {
         timer.cancel();
-        setState(() {
-          _cuentaAtras = 0;
-        });
         _empezarEntrenamiento();
       }
     });
   }
 
   void finalizarEntrenamiento() async {
-    // Detener timers y recibir datos
     _pauseEntrenamiento();
 
-    // Guardar en la base de datos
-
     await guardarSesionEntrenamiento();
-
+    
+  if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('Entrenamiento finalizado 🎉')));
+    ).showSnackBar(SnackBar(content: Text('Entrenamiento finalizado')));
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -247,7 +291,6 @@ class EntrenamientoIsometricoPageState
     _pauseEntrenamiento();
     setState(() {
       limpiarSpots();
-      // Borra los datos de la repetición actual antes de avanzar
       borrarDatosSetRep(setActual, repActual);
 
       if (repActual < widget.detalles.repeticiones) {
@@ -261,7 +304,6 @@ class EntrenamientoIsometricoPageState
   }
 
   void avanzarRepeticion() {
-    // Cancela cualquier temporizador de cuenta atras
     _cuentaAtrasDescansoTemporizador?.cancel();
 
     widget.ble.dejarRecibirDatos();
@@ -291,7 +333,7 @@ class EntrenamientoIsometricoPageState
 
     _cuentaAtrasDescansoTemporizador = Timer.periodic(Duration(seconds: 1), (
       timer,
-    ) {
+    ) async {
       if (!mounted) {
         timer.cancel();
         return;
@@ -300,6 +342,27 @@ class EntrenamientoIsometricoPageState
       setState(() {
         _cuentaAtrasDescanso--;
       });
+
+      switch (_cuentaAtrasDescanso) {
+        case 5:
+          await widget.audioService.playFive();
+          break;
+        case 4:
+          await widget.audioService.playFour();
+          break;
+        case 3:
+          await widget.audioService.playThree();
+          break;
+        case 2:
+          await widget.audioService.playTwo();
+          break;
+        case 1:
+          await widget.audioService.playOne();
+          break;
+        case 0:
+          await widget.audioService.playGo();
+          break;
+      }
 
       if (_cuentaAtrasDescanso <= 0) {
         timer.cancel();
@@ -350,13 +413,18 @@ class EntrenamientoIsometricoPageState
     setState(() {
       limpiarSpots();
 
-      borrarDatosSetRep(setActual, repActual);
+      for (int r = repActual; r >= 1; r--) {
+        borrarDatosSetRep(setActual, r);
+      }
 
       if (setActual > 1) {
         setActual--;
-        repActual = 1;
+
         borrarDatosSetRep(setActual, repActual);
+      } else {
+        repActual = 1;
       }
+
       _timer = widget.detalles.duracionRepeticion!;
     });
   }
@@ -372,8 +440,9 @@ class EntrenamientoIsometricoPageState
     for (Datos dato in datosGuardados) {
       dato.idEntrenamientoDetalle = detallesId;
     }
-
-    dbDatos.insertDatos(datosGuardados);
+    
+  if (!mounted) return;
+    dbDatos.insertDatos(datosGuardados, context);
   }
 
   void guardarDatosActuales() {
@@ -412,7 +481,7 @@ class EntrenamientoIsometricoPageState
       xMin = xMax - mostrarUltimos;
     }
 
-    double yMax = widget.detalles.pesoObjetivo + 5;
+    double yMax = widget.detalles.pesoObjetivo * 1.5;
 
     if (spots.isNotEmpty) {
       final ultimosSpots = spots.sublist(
@@ -429,7 +498,7 @@ class EntrenamientoIsometricoPageState
     }
 
     return Scaffold(
-      appBar: AppBarCustom(title: 'Entrenamiento isometrico'),
+      appBar: AppBarCustom(title: 'Entrenamiento'),
       body: Stack(
         children: [
           Padding(
@@ -439,29 +508,17 @@ class EntrenamientoIsometricoPageState
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     margin: EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange, width: 1.5),
-                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Peso actual: ',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
                           '${pesoActual.toStringAsFixed(1)} kg',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 30,
                             fontWeight: FontWeight.bold,
-                            color: Colors.orange[800],
+                            color: const Color.fromARGB(255, 0, 0, 0),
                           ),
                         ),
                       ],
@@ -479,28 +536,34 @@ class EntrenamientoIsometricoPageState
                           topTitles: AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
                           ),
-                          rightTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              interval: 10,
-                              reservedSize: 40,
-                              getTitlesWidget:
-                                  (value, _) => Padding(
-                                    padding: EdgeInsets.only(left: 8),
-                                    child: Text('${value.toInt()}'),
-                                  ),
-                            ),
-                          ),
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 10,
                               reservedSize: 40,
-                              getTitlesWidget:
-                                  (value, _) => Padding(
+                              getTitlesWidget: (value, _) {
+                                if (value == 0 || value == yMax) {
+                                  return Padding(
                                     padding: EdgeInsets.only(right: 8),
                                     child: Text('${value.toInt()}'),
-                                  ),
+                                  );
+                                }
+                                return Container();
+                              },
+                            ),
+                          ),
+                          rightTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 40,
+                              getTitlesWidget: (value, _) {
+                                if (value == 0 || value == yMax) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(left: 8),
+                                    child: Text('${value.toInt()}'),
+                                  );
+                                }
+                                return Container();
+                              },
                             ),
                           ),
                           bottomTitles: AxisTitles(
@@ -514,7 +577,7 @@ class EntrenamientoIsometricoPageState
                         ),
                         gridData: FlGridData(show: true),
                         borderData: FlBorderData(show: true),
-                        lineBarsData: _getColoredSegments(),
+                        lineBarsData: _colorearSegmentos(),
                         lineTouchData: LineTouchData(enabled: false),
                         extraLinesData: ExtraLinesData(
                           horizontalLines: [
@@ -531,13 +594,10 @@ class EntrenamientoIsometricoPageState
                     ),
                   ),
                   SizedBox(height: 24),
-                  Container(
+                  SizedBox(
                     width: double.infinity,
                     height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -662,14 +722,14 @@ class EntrenamientoIsometricoPageState
                       ElevatedButton(
                         onPressed: playPause,
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all(
+                          backgroundColor: WidgetStateProperty.all(
                             Colors.transparent,
                           ),
-                          elevation: MaterialStateProperty.all(0),
-                          padding: MaterialStateProperty.all(EdgeInsets.all(0)),
+                          elevation: WidgetStateProperty.all(0),
+                          padding: WidgetStateProperty.all(EdgeInsets.all(0)),
                         ),
                         child: SvgPicture.asset(
-                          '$boton',
+                          boton,
                           width: 32,
                           height: 32,
                         ),

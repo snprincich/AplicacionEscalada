@@ -1,3 +1,4 @@
+import 'package:app_escalada/pages/perfil_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:get_it/get_it.dart';
@@ -32,9 +33,16 @@ class _BlePageState extends State<BlePage> {
     super.dispose();
   }
 
-  void startScan() {
+  void startScan(BuildContext context) {
     if (!bluetoothReady) {
-      print('Bluetooth no esta listo');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bluetooth no está listo'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(16),
+        ),
+      );
       return;
     }
 
@@ -47,20 +55,21 @@ class _BlePageState extends State<BlePage> {
       },
     );
 
-    //Parar el escaneo tras 5 segundos automáticamente
-    Future.delayed(Duration(seconds: 5), () async {
+    Future.delayed(const Duration(seconds: 5), () async {
       await widget.ble.stopScan();
     });
   }
 
-  void connectToDevice(DiscoveredDevice device) async {
-    widget.ble.dispose();
-    await Future.delayed(Duration(milliseconds: 500));
+void connectToDevice(DiscoveredDevice device) async {
+  widget.ble.dispose();
+  await Future.delayed(Duration(milliseconds: 500));
 
-    if (await widget.ble.connectToDevice(device)) {
-      Navigator.pop(context);
-    }
+
+  if (await widget.ble.connectToDevice(device)) {
+    if (!mounted) return;
+    Navigator.pop(context);
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -68,28 +77,16 @@ class _BlePageState extends State<BlePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.secondary,
         iconTheme: IconThemeData(color: Colors.white),
-        title: Text('BLUETOOTH', style: TextStyle(color: Colors.white)),
+        title: Text('Bluetooth', style: TextStyle(color: Colors.white)),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: Icon(Icons.bluetooth),
+            icon: const Icon(Icons.person),
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => BlePage()),
+                MaterialPageRoute(builder: (_) => PerfilPage()),
               );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.info),
-            onPressed: () {
-              // Info
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              // Ajustes
             },
           ),
         ],
@@ -98,13 +95,13 @@ class _BlePageState extends State<BlePage> {
         width: 80,
         height: 80,
         child: FloatingActionButton(
-          onPressed: bluetoothReady ? startScan : null,
+          onPressed: bluetoothReady ? () => startScan(context) : null,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.bluetooth_audio_rounded, size: 32),
               SizedBox(height: 4),
-              Text('Scan', style: TextStyle(fontSize: 12)),
+              Text('Escanear', style: TextStyle(fontSize: 12)),
             ],
           ),
         ),
@@ -131,7 +128,7 @@ class _BlePageState extends State<BlePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Info del dispositivo
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,7 +136,7 @@ class _BlePageState extends State<BlePage> {
                             Text(
                               widget.ble.connectedDevice!.name.isNotEmpty
                                   ? widget.ble.connectedDevice!.name
-                                  : 'Unknown',
+                                  : 'Desconocido',
                               style: TextStyle(
                                 color: Colors.green,
                                 fontSize: 14,
@@ -155,14 +152,13 @@ class _BlePageState extends State<BlePage> {
                           ],
                         ),
                       ),
-                      // Botón de desconectar
                       IconButton(
                         icon: Icon(Icons.link_off, color: Colors.red),
                         onPressed: () async {
                           await widget.ble.dispose();
                           setState(
                             () {},
-                          ); // actualizar para que se borre el conectado
+                          );
                         },
                       ),
                     ],
@@ -176,7 +172,9 @@ class _BlePageState extends State<BlePage> {
               itemBuilder: (context, index) {
                 final device = widget.ble.devices[index];
                 return ListTile(
-                  title: Text(device.name.isNotEmpty ? device.name : "Unknown"),
+                  title: Text(
+                    device.name.isNotEmpty ? device.name : "Desconocido",
+                  ),
                   subtitle: Text(device.id),
                   onTap: () => connectToDevice(device),
                 );

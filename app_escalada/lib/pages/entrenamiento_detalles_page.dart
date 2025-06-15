@@ -11,10 +11,10 @@ class EntrenamientoDetallesPage extends StatefulWidget {
   final Entrenamiento entrenamiento;
 
   const EntrenamientoDetallesPage({
-    Key? key,
+    super.key,
     required this.detalle,
     required this.entrenamiento,
-  }) : super(key: key);
+  });
 
   @override
   State<EntrenamientoDetallesPage> createState() =>
@@ -29,7 +29,6 @@ class _EntrenamientoDetallesPageState extends State<EntrenamientoDetallesPage> {
   double yMax = 100;
   double xMax = 10;
 
-  // Variables para seleccionar filtro
   int? selectedSerie;
   int? selectedRepeticion;
 
@@ -88,7 +87,7 @@ class _EntrenamientoDetallesPageState extends State<EntrenamientoDetallesPage> {
     }).toList();
   }
 
-  List<LineChartBarData> _getColoredSegments() {
+  List<LineChartBarData> _colorearSegmentos() {
     final datosFiltrados = _filtrarDatos();
 
     if (datosFiltrados.isEmpty) return [];
@@ -227,8 +226,8 @@ class _EntrenamientoDetallesPageState extends State<EntrenamientoDetallesPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _getColoredSegments().isEmpty
-                        ? const Text('No hay datos para mostrar el gráfico.')
+                    _colorearSegmentos().isEmpty
+                        ? const Text('No hay datos.')
                         : SizedBox(
                           height: 200,
                           child: LineChart(
@@ -269,7 +268,7 @@ class _EntrenamientoDetallesPageState extends State<EntrenamientoDetallesPage> {
                               ),
                               gridData: FlGridData(show: true),
                               borderData: FlBorderData(show: true),
-                              lineBarsData: _getColoredSegments(),
+                              lineBarsData: _colorearSegmentos(),
                               lineTouchData: LineTouchData(enabled: false),
                               extraLinesData: ExtraLinesData(
                                 horizontalLines: [

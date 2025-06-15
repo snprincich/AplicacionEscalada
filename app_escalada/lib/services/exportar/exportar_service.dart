@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:app_escalada/models/datos_model.dart';
 import 'package:app_escalada/models/entrenamiento_detalles_model.dart';
 import 'package:app_escalada/models/entrenamiento_model.dart';
@@ -11,7 +12,8 @@ class ExportarService {
 
   ExportarService(this._dbDatos, this._csvService);
 
-  Future<String> exportarEntrenamientos({
+  // GENERA UN CSV Y LO GUARDA
+  Future<String?> exportarEntrenamientos({
     required List<EntrenamientoDetalles> detallesSeleccionados,
     required List<Entrenamiento> entrenamientos,
     String nombreArchivo = 'archivo.csv',
@@ -28,7 +30,7 @@ class ExportarService {
 
     List<List<String>> data = [];
 
-    // Cabecera
+    // CABECERA DE LA LISTA
     data.add([
       'id_entrenamiento',
       'nombre_entrenamiento',
@@ -46,7 +48,7 @@ class ExportarService {
       'peso',
     ]);
 
-    // Filas de datos
+    // FILAS
     for (var item in exportarModel) {
       data.add([
         item.idEntrenamiento.toString(),
@@ -66,9 +68,68 @@ class ExportarService {
       ]);
     }
 
-    return _csvService.exportarCSV(data: data, nombreArchivo: nombreArchivo);
+    return await _csvService.exportarCSV(data: data, nombreSugerido: nombreArchivo);
   }
 
+  // GENERA CSV EN STRING
+  Future<String> generarCSVString({
+    required List<EntrenamientoDetalles> detallesSeleccionados,
+    required List<Entrenamiento> entrenamientos,
+  }) async {
+    List<int> idsDetalles =
+        detallesSeleccionados.map((d) => d.idEntrenamientoDetalles!).toList();
+    List<Datos> datos = await _dbDatos.getDatosPorDetalles(idsDetalles);
+
+    List<ExportarEntrenamienoModel> exportarModel = await combinarParaExportar(
+      entrenamientos: entrenamientos,
+      detalles: detallesSeleccionados,
+      datos: datos,
+    );
+
+    List<List<String>> data = [];
+
+    // CABECERA
+    data.add([
+      'id_entrenamiento',
+      'nombre_entrenamiento',
+      'id_entrenamiento_detalles',
+      'peso_objetivo',
+      'repeticiones',
+      'series',
+      'descanso_repeticion',
+      'descanso_serie',
+      'duracion_repeticion',
+      'fecha',
+      'num_serie',
+      'num_repeticion',
+      'tiempo',
+      'peso',
+    ]);
+
+    // FILAS
+    for (var item in exportarModel) {
+      data.add([
+        item.idEntrenamiento.toString(),
+        item.nombreEntrenamiento,
+        item.idEntrenamientoDetalle.toString(),
+        item.pesoObjetivo.toString(),
+        item.repeticiones.toString(),
+        item.series.toString(),
+        item.descansoRepeticion?.toString() ?? '',
+        item.descansoSerie?.toString() ?? '',
+        item.duracionRepeticion?.toString() ?? '',
+        item.fecha,
+        item.numSerie.toString(),
+        item.numRepeticion.toString(),
+        item.tiempo.toString(),
+        item.peso?.toString() ?? '',
+      ]);
+    }
+
+    return _csvService.generarCSVString(data: data);
+  }
+
+  // COMBINA LOS MODELS PARA EXPORTARLO EN UNO
   Future<List<ExportarEntrenamienoModel>> combinarParaExportar({
     required List<Entrenamiento> entrenamientos,
     required List<EntrenamientoDetalles> detalles,
@@ -79,20 +140,14 @@ class ExportarService {
     for (var dato in datos) {
       final detalle = detalles.firstWhere(
         (d) => d.idEntrenamientoDetalles == dato.idEntrenamientoDetalle,
-        orElse:
-            () =>
-                throw Exception(
-                  'Detalle no encontrado para id ${dato.idEntrenamientoDetalle}',
-                ),
+        orElse: () => throw Exception(
+            'Detalle no encontrado para id ${dato.idEntrenamientoDetalle}'),
       );
 
       final entrenamiento = entrenamientos.firstWhere(
         (e) => e.idEntrenamiento == detalle.idEntrenamiento,
-        orElse:
-            () =>
-                throw Exception(
-                  'Entrenamiento no encontrado para id ${detalle.idEntrenamiento}',
-                ),
+        orElse: () => throw Exception(
+            'Entrenamiento no encontrado para id ${detalle.idEntrenamiento}'),
       );
 
       exportList.add(

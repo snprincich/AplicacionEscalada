@@ -58,7 +58,7 @@ class DBMain {
           )
         ''');
 
-        // Insertar entrenamientos por defecto
+        // ENTRENAMIENTOS POR DEFECTO
         await db.insert('entrenamientos', {
           'nombre_entrenamiento': 'Isometrico',
         });

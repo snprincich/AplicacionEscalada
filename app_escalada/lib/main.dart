@@ -1,3 +1,4 @@
+import 'package:app_escalada/services/audio/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:app_escalada/services/ble/bluetooth.dart';
@@ -17,14 +18,11 @@ void setupLocator() {
   locator.registerLazySingleton<DBDatos>(() => DBDatos());
   locator.registerLazySingleton<DBPerfil>(() => DBPerfil());
   locator.registerLazySingleton<DBEntrenamientos>(() => DBEntrenamientos());
-  locator.registerLazySingleton<DBEntrenamientosDetalles>(
-    () => DBEntrenamientosDetalles(),
-  );
+  locator.registerLazySingleton<DBEntrenamientosDetalles>(() => DBEntrenamientosDetalles());
   locator.registerLazySingleton<PerfilService>(() => PerfilService());
   locator.registerLazySingleton<CSVService>(() => CSVService());
-  locator.registerLazySingleton(
-    () => ExportarService(GetIt.I<DBDatos>(), GetIt.I<CSVService>()),
-  );
+  locator.registerLazySingleton(() => ExportarService(GetIt.I<DBDatos>(), GetIt.I<CSVService>()));
+  locator.registerLazySingleton<AudioService>(() => AudioService());
 }
 
 void main() {

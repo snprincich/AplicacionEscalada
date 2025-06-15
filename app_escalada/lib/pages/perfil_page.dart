@@ -1,12 +1,16 @@
+import 'package:app_escalada/pages/ble_page.dart';
+import 'package:app_escalada/services/ble/bluetooth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:app_escalada/models/perfil_model.dart';
 import 'package:app_escalada/pages/pagina_principal.dart';
 import 'package:app_escalada/services/db/db_perfil.dart';
 import 'package:app_escalada/services/perfil/perfil_service.dart';
-import 'package:app_escalada/widgets/appBarCustom.dart';
 
 class PerfilPage extends StatefulWidget {
+  const PerfilPage({super.key});
+
   @override
   PerfilPageState createState() => PerfilPageState();
 }
@@ -86,21 +90,84 @@ class PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  void navegar(Widget pagina) {
-    if (!mounted)
-      return; //NOS ASEGURAMOS DE QUE FLUTTER NO INTENTA ACCEDER A UN CONTEXT QUE YA NO EXISTE
+void navegar(Widget pagina) {
+  if (!mounted) return;
 
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => pagina));
+  if (Navigator.canPop(context)) {
+    Navigator.of(context).pop();
+  } else {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => pagina),
+    );
   }
+}
 
-  @override
-  Widget build(BuildContext context) {
-    final perfilActivo = perfilService.perfilActivo;
 
-    return Scaffold(
-      appBar: AppBarCustom(title: 'Perfil'),
+@override
+Widget build(BuildContext context) {
+  final perfilActivo = perfilService.perfilActivo;
+  final ble = GetIt.I<Ble>();
+
+  // ignore: deprecated_member_use
+return WillPopScope(
+  onWillPop: () async {
+    final salir = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Salir de la aplicación?'),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => SystemNavigator.pop(),
+            child: const Text('Salir'),
+          ),
+        ],
+      ),
+    );
+    return salir == true;
+  },
+    child: Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ValueListenableBuilder<bool>(
+          valueListenable: ble.conectadoNotifier,
+          builder: (context, conectado, _) {
+            return AppBar(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              iconTheme: const IconThemeData(color: Colors.white),
+              title: const Text(
+                'Perfil',
+                style: TextStyle(color: Colors.white),
+              ),
+              automaticallyImplyLeading: false,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: conectado ? Colors.green : Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.bluetooth, color: Colors.white),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => BlePage()),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -191,6 +258,7 @@ class PerfilPageState extends State<PerfilPage> {
           ],
         ),
       ),
-    );
-  }
+    )
+  );
 }
+  }

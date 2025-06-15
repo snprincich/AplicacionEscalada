@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:app_escalada/services/ble/bluetooth.dart';
 import 'package:app_escalada/pages/ble_page.dart';
-
 import 'package:app_escalada/pages/perfil_page.dart';
 
 class AppBarCustom extends StatelessWidget implements PreferredSizeWidget {

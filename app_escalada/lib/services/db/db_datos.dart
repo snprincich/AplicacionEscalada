@@ -1,20 +1,30 @@
 import 'package:app_escalada/models/datos_model.dart';
 import 'package:app_escalada/services/db/db_main.dart';
+import 'package:flutter/material.dart';
 
 class DBDatos {
-  Future<int> insertDato(Datos dato) async {
-    final db = await DBMain.getDatabase();
-    return db.insert('datos', dato.toMap());
+  Future<int> insertDato(Datos dato, BuildContext context) async {
+    try {
+      final db = await DBMain.getDatabase();
+      return await db.insert('datos', dato.toMap());
+    } catch (e) {
+      return -1;
+    }
   }
 
-  Future<void> insertDatos(List<Datos> listaDatos) async {
-    final db = await DBMain.getDatabase();
+  Future<int> insertDatos(List<Datos> listaDatos, BuildContext context) async {
+    try {
+      final db = await DBMain.getDatabase();
 
-    await db.transaction((txn) async {
-      for (var dato in listaDatos) {
-        await txn.insert('datos', dato.toMap());
-      }
-    });
+      await db.transaction((txn) async {
+        for (var dato in listaDatos) {
+          await txn.insert('datos', dato.toMap());
+        }
+      });
+      return 1;
+    } catch (e) {
+      return -1;
+    }
   }
 
   Future<List<Datos>> getDatosPorDetalle(int idEntrenamientoDetalle) async {

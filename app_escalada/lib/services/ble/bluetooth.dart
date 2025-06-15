@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
+
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
@@ -29,7 +29,6 @@ class Ble {
 
   bool isConnected() {
     return connected;
-    //dataSubscription != null;
   }
 
   Future<bool> checkAndRequestBluetoothPermissions() async {
@@ -82,7 +81,9 @@ class Ble {
 
   Future<void> startScan({void Function()? onDevicesUpdated}) async {
     if (isScanning) {
-      print("Restarting scan...");
+      if (kDebugMode) {
+        print("Restarting scan...");
+      }
       await stopScan();
       await Future.delayed(Duration(seconds: 1));
     }
@@ -156,12 +157,16 @@ class Ble {
     lastDevice = device;
 
     connection?.cancel();
-    print('🔗 Intentando conectar a ${device.id}...');
+    if (kDebugMode) {
+      print('🔗 Intentando conectar a ${device.id}...');
+    }
     connection = ble
         .connectToDevice(id: device.id)
         .listen(
           (connectionState) {
-            print('Estado BLE: ${connectionState.connectionState}');
+            if (kDebugMode) {
+              print('Estado BLE: ${connectionState.connectionState}');
+            }
 
             if (connectionState.connectionState ==
                 DeviceConnectionState.connected) {
@@ -175,7 +180,9 @@ class Ble {
 
             if (connectionState.connectionState ==
                 DeviceConnectionState.disconnected) {
-              print("🔌 Desconectado. Reintentando en 5s...");
+              if (kDebugMode) {
+                print("🔌 Desconectado. Reintentando en 5s...");
+              }
               connectedDevice = null;
               connected = false;
               conectadoNotifier.value = false;
@@ -188,7 +195,9 @@ class Ble {
             }
           },
           onError: (e) {
-            print("Error en conexión: $e");
+            if (kDebugMode) {
+              print("Error en conexión: $e");
+            }
             connected = false;
             connectedDevice = null;
 
@@ -220,7 +229,9 @@ class Ble {
 
   Future<void> recibirDatos() async {
     if (connectedDevice == null) {
-      print('No hay dispositivo conectado.');
+      if (kDebugMode) {
+        print('No hay dispositivo conectado.');
+      }
       return;
     }
     if (dataSubscription != null) {
@@ -242,21 +253,29 @@ class Ble {
           (data) {
             try {
               final text = utf8.decode(data).trim();
-              //print('Texto recibido: $text');
+              if (kDebugMode) {
+                print('Texto recibido: $text');
+              }
 
               final floatValue = double.tryParse(text);
               if (floatValue != null) {
-                print('Time: ${DateTime.now()} - numérico: $floatValue');
+                if (kDebugMode) {
+                  print('Time: ${DateTime.now()} - numérico: $floatValue');
+                }
                 onDataReceived?.call(floatValue);
 
                 if (!completer.isCompleted) {
                   completer.complete();
                 }
               } else {
-                print('Error al convertir el dato a double');
+                if (kDebugMode) {
+                  print('Error al convertir el dato a double');
+                }
               }
             } catch (e) {
-              print('Error al decodificar datos: $e');
+              if (kDebugMode) {
+                print('Error al decodificar datos: $e');
+              }
             }
           },
           onError: (error) {

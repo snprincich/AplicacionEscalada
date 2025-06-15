@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:app_escalada/models/entrenamiento_detalles_model.dart';
@@ -7,15 +9,17 @@ import 'package:app_escalada/services/db/db_entrenamiento_detalles.dart';
 import 'package:app_escalada/services/db/db_entrenamientos.dart';
 import 'package:app_escalada/services/exportar/exportar_service.dart';
 import 'package:app_escalada/services/perfil/perfil_service.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
-class HistoriaPage extends StatefulWidget {
-  const HistoriaPage({Key? key}) : super(key: key);
+class HistorialPage extends StatefulWidget {
+  const HistorialPage({super.key});
 
   @override
-  _HistoriaPageState createState() => _HistoriaPageState();
+  HistorialPageState createState() => HistorialPageState();
 }
 
-class _HistoriaPageState extends State<HistoriaPage> {
+class HistorialPageState extends State<HistorialPage> {
   final perfilService = GetIt.I<PerfilService>();
   final dbEntrenamientoDetalles = GetIt.I<DBEntrenamientosDetalles>();
   final dbEntrenamientos = GetIt.I<DBEntrenamientos>();
@@ -25,7 +29,7 @@ class _HistoriaPageState extends State<HistoriaPage> {
   List<Entrenamiento> entrenamientos = [];
   bool isLoading = true;
 
-  Set<EntrenamientoDetalles> _seleccionados = {};
+  final Set<EntrenamientoDetalles> _seleccionados = {};
 
   @override
   void initState() {
@@ -75,30 +79,64 @@ class _HistoriaPageState extends State<HistoriaPage> {
     return entrenamiento.nombreEntrenamiento;
   }
 
-  Future<void> _exportarCSV() async {
-    if (_seleccionados.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No has seleccionado ningún detalle')),
-      );
-      return;
-    }
-
-    try {
-      final path = await exportarService.exportarEntrenamientos(
-        detallesSeleccionados: _seleccionados.toList(),
-        entrenamientos: entrenamientos,
-      );
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Archivo exportado a: $path')));
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error exportando CSV: $e')));
-    }
+Future<void> _exportarCSV() async {
+  if (_seleccionados.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No has seleccionado ningún detalle')),
+    );
+    return;
   }
 
+  final controlador = TextEditingController(text: 'entrenamientos_export.csv');
+
+  final nombreArchivo = await showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Nombre del archivo'),
+      content: TextField(
+        controller: controlador,
+        decoration: const InputDecoration(hintText: 'archivo.csv'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, controlador.text),
+          child: const Text('Aceptar'),
+        ),
+      ],
+    ),
+  );
+
+  if (nombreArchivo == null || nombreArchivo.trim().isEmpty) return;
+
+  try {
+    final csvString = await exportarService.generarCSVString(
+      detallesSeleccionados: _seleccionados.toList(),
+      entrenamientos: entrenamientos,
+    );
+
+    final tempDir = await getTemporaryDirectory();
+    final filePath = '${tempDir.path}/$nombreArchivo';
+    final file = File(filePath);
+    await file.writeAsString(csvString);
+
+    // ignore: deprecated_member_use
+    await Share.shareXFiles(
+      [XFile(filePath)],
+      text: 'Exportación de entrenamientos desde App Escalada',
+      subject: 'Archivo CSV: $nombreArchivo',
+    );
+  } catch (e) {
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Error exportando: $e')),
+  );
+}
+}
   @override
   Widget build(BuildContext context) {
     final perfil = perfilService.perfilActivo;
@@ -111,7 +149,7 @@ class _HistoriaPageState extends State<HistoriaPage> {
           isLoading
               ? const Center(child: CircularProgressIndicator())
               : detalles.isEmpty
-              ? const Center(child: Text('No hay detalles registrados.'))
+              ? const Center(child: Text('No hay detalles.'))
               : ListView.builder(
                 itemCount: detalles.length,
                 itemBuilder: (context, index) {
@@ -165,8 +203,8 @@ class _HistoriaPageState extends State<HistoriaPage> {
           _seleccionados.isNotEmpty
               ? FloatingActionButton(
                 onPressed: _exportarCSV,
+                tooltip: 'Exportar a CSV',
                 child: const Icon(Icons.download),
-                tooltip: 'Exportar seleccionados a CSV',
               )
               : null,
     );
