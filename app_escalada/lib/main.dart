@@ -1,5 +1,6 @@
 import 'package:app_escalada/services/audio/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // 👈 Importante para SystemChrome
 import 'package:get_it/get_it.dart';
 import 'package:app_escalada/services/ble/bluetooth.dart';
 import 'package:app_escalada/services/db/db_datos.dart';
@@ -25,9 +26,16 @@ void setupLocator() {
   locator.registerLazySingleton<AudioService>(() => AudioService());
 }
 
-void main() {
+void main() async {
+
+  // SOLO ORIENTACION VERTICAL
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
   setupLocator();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
