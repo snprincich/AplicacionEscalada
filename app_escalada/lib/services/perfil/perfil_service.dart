@@ -11,6 +11,7 @@ class PerfilService {
 
   Perfil? get perfilActivo => _perfil;
 
+  // CARGA EL PERFIL GUARDADO EN SHARED PREFERENCES, SI EXISTE
   Future<void> cargarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
     String? perfilJson = prefs.getString('perfil');
@@ -20,12 +21,14 @@ class PerfilService {
     }
   }
 
+  // CAMBIA EL PERFIL ACTIVO Y LO GUARDA EN SHARED PREFERENCES
   Future<bool> cambiarPerfil(Perfil perfil) async {
     _perfil = perfil;
     await guardarPerfil();
     return true;
   }
 
+  // GUARDA EL PERFIL ACTIVO EN SHARED PREFERENCES COMO JSON
   Future<void> guardarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -35,12 +38,14 @@ class PerfilService {
     }
   }
 
+  // ELIMINA EL PERFIL GUARDADO EN SHARED PREFERENCES
   Future<void> eliminarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('perfil');
     _perfil = null;
   }
 
+  // VERIFICA QUE EL PERFIL ACTIVO EXISTA EN LA BASE DE DATOS Y SEA EL MISMO
   Future<bool> perfilValido() async {
     if (_perfil == null) return false;
 

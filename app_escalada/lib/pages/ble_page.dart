@@ -15,12 +15,14 @@ class BlePage extends StatefulWidget {
 class _BlePageState extends State<BlePage> {
   bool bluetoothReady = false;
 
+  // SE EJECUTA AUTOMATICAMENTE AL INICIAR LA CLASE
   @override
   void initState() {
     super.initState();
     initBle();
   }
 
+  // PEDIR PERMISOS Y HABILITAR
   Future<void> initBle() async {
     await widget.ble.checkAndRequestBluetoothPermissions();
     setState(() {
@@ -33,6 +35,7 @@ class _BlePageState extends State<BlePage> {
     super.dispose();
   }
 
+  // ESCANEA DISPOSITIVOS
   void startScan(BuildContext context) {
     if (!bluetoothReady) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,20 +63,21 @@ class _BlePageState extends State<BlePage> {
     });
   }
 
-void connectToDevice(DiscoveredDevice device) async {
-  widget.ble.dispose();
-  await Future.delayed(Duration(milliseconds: 500));
+  // CONECTAR AL DISPOSITIVO QUE VIENE POR PARAMETRO
+  void connectToDevice(DiscoveredDevice device) async {
+    widget.ble.dispose();
+    await Future.delayed(Duration(milliseconds: 500));
 
-
-  if (await widget.ble.connectToDevice(device)) {
-    if (!mounted) return;
-    Navigator.pop(context);
+    if (await widget.ble.connectToDevice(device)) {
+      if (!mounted) return;
+      Navigator.pop(context);
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      //BARA SUPERIOR
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.secondary,
         iconTheme: IconThemeData(color: Colors.white),
@@ -91,6 +95,7 @@ void connectToDevice(DiscoveredDevice device) async {
           ),
         ],
       ),
+      // BOTÓN ESCANEAR
       floatingActionButton: SizedBox(
         width: 80,
         height: 80,
@@ -128,7 +133,7 @@ void connectToDevice(DiscoveredDevice device) async {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-
+                      // INFO DISPOSITIVO
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,13 +157,12 @@ void connectToDevice(DiscoveredDevice device) async {
                           ],
                         ),
                       ),
+                      // BOTÓN DESCONECTAR
                       IconButton(
                         icon: Icon(Icons.link_off, color: Colors.red),
                         onPressed: () async {
                           await widget.ble.dispose();
-                          setState(
-                            () {},
-                          );
+                          setState(() {});
                         },
                       ),
                     ],
@@ -166,6 +170,7 @@ void connectToDevice(DiscoveredDevice device) async {
                 ],
               ),
             ),
+          // LISTA DE DISPOSITIVOS
           Expanded(
             child: ListView.builder(
               itemCount: widget.ble.devices.length,

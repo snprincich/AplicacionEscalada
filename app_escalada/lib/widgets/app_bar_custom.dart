@@ -12,6 +12,7 @@ class AppBarCustom extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ESCUCHA LOS CAMBIOS DE CONEXIÓN DEL BLUETOOTH PARA ACTUALIZAR EL ICONO
     return ValueListenableBuilder<bool>(
       valueListenable: ble.conectadoNotifier,
       builder: (context, conectado, _) {
@@ -20,6 +21,7 @@ class AppBarCustom extends StatelessWidget implements PreferredSizeWidget {
           title: Text(title),
           actions: [
             Padding(
+              // CAMBIA EL COLOR DEPENDIENDO DEL ESTADO DE CONEXION
               padding: const EdgeInsets.all(8.0),
               child: Container(
                 decoration: BoxDecoration(
@@ -46,6 +48,7 @@ class AppBarCustom extends StatelessWidget implements PreferredSizeWidget {
                 );
               },
             ),
+            // BOTONES PARA FUTURAS FUNCIONALIDADES
             /*
             IconButton(icon: const Icon(Icons.info), onPressed: () {}),
             IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
@@ -56,6 +59,7 @@ class AppBarCustom extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  // ALTURA DE LA APPBAR
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

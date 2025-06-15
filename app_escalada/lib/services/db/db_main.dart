@@ -4,15 +4,19 @@ import 'package:path/path.dart';
 class DBMain {
   static Database? _db;
 
+  // TRAE LA BASE DE DATOS, SI NO EXISTE, LA CREA
   static Future<Database> getDatabase() async {
     if (_db != null) return _db!;
 
+    // OBTIENE LA RUTA DONDE SE GUARDAN LAS BASES DE DATOS
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'database.db');
 
+    // ABRE LA BASE DE DATOS Y LA CREA SI NO EXISTE
     _db = await openDatabase(
       path,
       version: 1,
+      // SE CREAN LAS TABLAS
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE perfiles(

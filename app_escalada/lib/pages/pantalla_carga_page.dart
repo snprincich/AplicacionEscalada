@@ -18,9 +18,13 @@ class _PantallaCargaPageState extends State<PantallaCargaPage> {
   @override
   void initState() {
     super.initState();
+
+    // LLAMA AL METODO QUE INICIALIZA TODOS LOS SERVICIOS NECESARIOS PARA QUE FUNCIONE LA APLICACION
     _inicializarApp();
   }
 
+  // INICIALIZA TODOS LOS SERVICIOS NECESARIOS PARA QUE FUNCIONE LA APLICACION
+  // INICIALIZA BD, PERFIL Y BLUETOOTH
   void _inicializarApp() async {
     final perfilService = GetIt.I<PerfilService>();
     final ble = GetIt.I<Ble>();
@@ -28,7 +32,8 @@ class _PantallaCargaPageState extends State<PantallaCargaPage> {
     ble.loadDevice();
 
     try {
-      //HACE UN AWAIT DE LO QUE HAYA DENTRO
+      // HACE UN AWAIT DE LO QUE HAYA DENTRO
+      // ESPERA A QUE TERMINEN TODAS LAS LLAMADAS ASINCRONAS ANTES DE AVANZAR
       await Future.wait([
         DBMain.getDatabase(),
         perfilService.cargarPerfil(),
@@ -40,6 +45,7 @@ class _PantallaCargaPageState extends State<PantallaCargaPage> {
       }
     }
 
+    // NAVEGA A PERFIL SI NO HAY PERFIL VÁLIDO, SINO A PÁGINA PRINCIPAL
     if (!await perfilService.perfilValido()) {
       navegar(PerfilPage());
     } else {

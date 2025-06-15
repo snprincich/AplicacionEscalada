@@ -16,6 +16,7 @@ class ConfigEntrenamientoIsometricoPage extends StatefulWidget {
 
 class _ConfigEntrenamientoIsometricoPageState
     extends State<ConfigEntrenamientoIsometricoPage> {
+  // CONTROLADORES PARA LOS CAMPOS DE TEXTO
   final TextEditingController _pesoController = TextEditingController();
   final TextEditingController _repsController = TextEditingController();
   final TextEditingController _setsController = TextEditingController();
@@ -29,6 +30,7 @@ class _ConfigEntrenamientoIsometricoPageState
     _cargarDatosGuardados();
   }
 
+  // CARGA DATOS DE SHARED PREFERENCES
   Future<void> _cargarDatosGuardados() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -45,6 +47,7 @@ class _ConfigEntrenamientoIsometricoPageState
     });
   }
 
+  // GUARDA DATOS EN SHARED PREFERENCES
   Future<void> _guardarDatos() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -65,6 +68,7 @@ class _ConfigEntrenamientoIsometricoPageState
     );
   }
 
+  // LLAMA AL METODO PARA GUARDAR DATOS, Y NAVEGA A LA PAGINA DE ENTRENAMIENTOS
   Future<void> _aceptar() async {
     await _guardarDatos();
 
@@ -86,7 +90,7 @@ class _ConfigEntrenamientoIsometricoPageState
       descansoRepeticion: descReps.toDouble(),
       fecha: DateTime.now().toString(),
     );
-    
+
     if (!mounted) return;
     Navigator.push(
       context,
@@ -99,46 +103,48 @@ class _ConfigEntrenamientoIsometricoPageState
 
   @override
   Widget build(BuildContext context) {
+    // TAMAÑOS PARA EL GRID
     final double cardSpacing = 16;
     final double horizontalPadding = 16;
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = (screenWidth - horizontalPadding * 2 - cardSpacing) / 2;
 
+    // CONFIGURACION DE LOS CAMPOS DE ENTRADA
     final inputs = [
       {
         'label': 'Peso (kg)',
         'controller': _pesoController,
-        'opciones': List.generate(200, (i) => i +1),
+        'opciones': List.generate(200, (i) => i + 1),
         'permitirDecimal': true,
       },
       {
         'label': 'Repeticiones',
         'controller': _repsController,
-        'opciones': List.generate(20, (i) => i +1 ),
+        'opciones': List.generate(20, (i) => i + 1),
         'permitirDecimal': false,
       },
       {
         'label': 'Sets',
         'controller': _setsController,
-        'opciones': List.generate(10, (i) => i +1 ),
+        'opciones': List.generate(10, (i) => i + 1),
         'permitirDecimal': false,
       },
       {
         'label': 'Tiempo por repetición',
         'controller': _tiempoController,
-        'opciones': List.generate(300, (i) => i +1),
+        'opciones': List.generate(300, (i) => i + 1),
         'permitirDecimal': false,
       },
       {
         'label': 'Descanso entre sets',
         'controller': _descSetsController,
-        'opciones': List.generate(300, (i) => i +1),
+        'opciones': List.generate(300, (i) => i + 1),
         'permitirDecimal': false,
       },
       {
         'label': 'Descanso entre repeticiones',
         'controller': _descRepsController,
-        'opciones': List.generate(300, (i) => i +1),
+        'opciones': List.generate(300, (i) => i + 1),
         'permitirDecimal': false,
       },
     ];
@@ -298,8 +304,7 @@ class _SelectorNumeroState extends State<SelectorNumero> {
       height: 40,
       child: TextField(
         controller: widget.controller,
-        textAlignVertical:
-            TextAlignVertical.center,
+        textAlignVertical: TextAlignVertical.center,
         keyboardType:
             widget.permitirDecimal
                 ? const TextInputType.numberWithOptions(decimal: true)

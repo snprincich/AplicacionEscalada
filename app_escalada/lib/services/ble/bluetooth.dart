@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -27,10 +26,12 @@ class Ble {
 
   Ble({this.onDataReceived});
 
+  // DEVUELVE SI HAY UN DISPOSITIVO CONECTADO
   bool isConnected() {
     return connected;
   }
 
+  // COMPRUEBA Y PIDE PERMISOS DE BLUETOOTH
   Future<bool> checkAndRequestBluetoothPermissions() async {
     if (Platform.isAndroid) {
       final bluetoothScanStatus = await Permission.bluetoothScan.request();
@@ -53,6 +54,7 @@ class Ble {
     return true;
   }
 
+  // INICIA ESCANEO DE DISPOSITIVOS BLUETOOTH (BLE)
   Future<void> scanBleDevices({void Function()? onDevicesUpdated}) async {
     await scanSubscription?.cancel();
     scanSubscription = null;
@@ -73,12 +75,14 @@ class Ble {
         );
   }
 
+  // DETIENE EL ESCANEO
   Future<void> stopScan() async {
     await scanSubscription?.cancel();
     scanSubscription = null;
     isScanning = false;
   }
 
+  // INICIA EL ESCANEO, DETENIENDO EL ANTERIOR
   Future<void> startScan({void Function()? onDevicesUpdated}) async {
     if (isScanning) {
       if (kDebugMode) {
@@ -90,6 +94,7 @@ class Ble {
     scanBleDevices(onDevicesUpdated: onDevicesUpdated);
   }
 
+  // GUARDA UN DISPOSITIVO CON SHARED PREFERENCES
   Future<void> saveDevice(DiscoveredDevice device) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -112,6 +117,7 @@ class Ble {
     prefs.setString('savedDevice', jsonEncode(deviceMap));
   }
 
+  // CARGA EL DISPOSITIVO GUARDADO EN SHARED PREFERENCES Y SE INTENTA CONECTAR
   Future<bool?> loadDevice() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('savedDevice');
@@ -152,6 +158,7 @@ class Ble {
     return Future.value(true);
   }
 
+  // SE CONECTA AL DISPOSITIVO QUE RECIBE POR PARAMETRO
   Future<bool> connectToDevice(DiscoveredDevice device) async {
     final completer = Completer<bool>();
     lastDevice = device;
@@ -214,6 +221,7 @@ class Ble {
     return completer.future;
   }
 
+  // CIERRA TODA LAS CONEXIONES
   Future<void> dispose() async {
     await scanSubscription?.cancel();
     await connection?.cancel();
@@ -222,11 +230,13 @@ class Ble {
     connection = null;
   }
 
+  // PARA LA RECEPCION DE DATOS
   void dejarRecibirDatos() {
     dataSubscription?.cancel();
     dataSubscription = null;
   }
 
+  // SE SUSCRIBE A UNA CARACTERISTICA PARA RECIBIR DATOS DEL DISPOSITIVO
   Future<void> recibirDatos() async {
     if (connectedDevice == null) {
       if (kDebugMode) {

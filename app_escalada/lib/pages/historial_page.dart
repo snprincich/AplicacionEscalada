@@ -37,6 +37,7 @@ class HistorialPageState extends State<HistorialPage> {
     _cargarEntrenamientos();
   }
 
+  // TRAE LOS ENTRENAMIENTOS Y DETALLES DESDE LA BD
   Future<void> _cargarEntrenamientos() async {
     if (perfilService.perfilActivo != null) {
       final dataDetalles = await dbEntrenamientoDetalles.getDetallesPorPerfil(
@@ -56,6 +57,7 @@ class HistorialPageState extends State<HistorialPage> {
     }
   }
 
+  //FORMATEA LA FECHA Y HORA
   String _formatearFechaHora(String fechaString) {
     final fecha = DateTime.tryParse(fechaString);
     if (fecha == null) return fechaString;
@@ -71,6 +73,7 @@ class HistorialPageState extends State<HistorialPage> {
     return '$dia/$mes/$anio $hora:$minuto';
   }
 
+  // OBTIENE EL NOMBRE DEL ENTRENAMIENTO POR ID
   String _nombreEntrenamiento(int idEntrenamiento) {
     final entrenamiento = entrenamientos.firstWhere(
       (e) => e.idEntrenamiento == idEntrenamiento,
@@ -79,64 +82,69 @@ class HistorialPageState extends State<HistorialPage> {
     return entrenamiento.nombreEntrenamiento;
   }
 
-Future<void> _exportarCSV() async {
-  if (_seleccionados.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No has seleccionado ningún detalle')),
+  // EXPORTA LOS DETALLES SELECCIONADOS A CSV USANDO LA FUNCION DE COMPARTIR
+  Future<void> _exportarCSV() async {
+    if (_seleccionados.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No has seleccionado ningún detalle')),
+      );
+      return;
+    }
+
+    final controlador = TextEditingController(
+      text: 'entrenamientos_export.csv',
     );
-    return;
+
+    final nombreArchivo = await showDialog<String>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Nombre del archivo'),
+            content: TextField(
+              controller: controlador,
+              decoration: const InputDecoration(hintText: 'archivo.csv'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, controlador.text),
+                child: const Text('Aceptar'),
+              ),
+            ],
+          ),
+    );
+
+    if (nombreArchivo == null || nombreArchivo.trim().isEmpty) return;
+
+    try {
+      final csvString = await exportarService.generarCSVString(
+        detallesSeleccionados: _seleccionados.toList(),
+        entrenamientos: entrenamientos,
+      );
+
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/$nombreArchivo';
+      final file = File(filePath);
+      await file.writeAsString(csvString);
+
+      // ignore: deprecated_member_use
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: 'Exportar entrenamientos',
+        subject: 'Archivo CSV: $nombreArchivo',
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error exportando: $e')));
+    }
   }
 
-  final controlador = TextEditingController(text: 'entrenamientos_export.csv');
-
-  final nombreArchivo = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Nombre del archivo'),
-      content: TextField(
-        controller: controlador,
-        decoration: const InputDecoration(hintText: 'archivo.csv'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, controlador.text),
-          child: const Text('Aceptar'),
-        ),
-      ],
-    ),
-  );
-
-  if (nombreArchivo == null || nombreArchivo.trim().isEmpty) return;
-
-  try {
-    final csvString = await exportarService.generarCSVString(
-      detallesSeleccionados: _seleccionados.toList(),
-      entrenamientos: entrenamientos,
-    );
-
-    final tempDir = await getTemporaryDirectory();
-    final filePath = '${tempDir.path}/$nombreArchivo';
-    final file = File(filePath);
-    await file.writeAsString(csvString);
-
-    // ignore: deprecated_member_use
-    await Share.shareXFiles(
-      [XFile(filePath)],
-      text: 'Exportación de entrenamientos desde App Escalada',
-      subject: 'Archivo CSV: $nombreArchivo',
-    );
-  } catch (e) {
-  if (!mounted) return;
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Error exportando: $e')),
-  );
-}
-}
   @override
   Widget build(BuildContext context) {
     final perfil = perfilService.perfilActivo;

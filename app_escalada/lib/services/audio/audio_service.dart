@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 
+// CADA METODO EJECUTA UN AUDIO
 class AudioService {
   final AudioPlayer _player = AudioPlayer();
 

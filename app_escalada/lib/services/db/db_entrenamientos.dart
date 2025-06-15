@@ -1,18 +1,16 @@
 import 'package:app_escalada/models/entrenamiento_model.dart';
 import 'package:app_escalada/services/db/db_main.dart';
 
+// NO HAY INSERT/UPDATE/DELETE YA QUE SE INSERTAN POR DEFECTO AL CREAR LA BASE DE DATOS
 class DBEntrenamientos {
-  Future<int> insertEntrenamiento(Entrenamiento entrenamiento) async {
-    final db = await DBMain.getDatabase();
-    return db.insert('entrenamientos', entrenamiento.toMap());
-  }
-
+  // OBTIENE TODOS LOS ENTRENAMIENTOS DE LA BASE DE DATOS
   Future<List<Entrenamiento>> getAllEntrenamientos() async {
     final db = await DBMain.getDatabase();
     final result = await db.query('entrenamientos');
     return result.map((map) => Entrenamiento.fromMap(map)).toList();
   }
 
+  // OBTIENE UN ENTRENAMIENTO POR SU ID
   Future<Entrenamiento?> getEntrenamiento(int id) async {
     final db = await DBMain.getDatabase();
     final result = await db.query(
@@ -21,24 +19,5 @@ class DBEntrenamientos {
       whereArgs: [id],
     );
     return result.isNotEmpty ? Entrenamiento.fromMap(result.first) : null;
-  }
-
-  Future<int> updateEntrenamiento(Entrenamiento entrenamiento) async {
-    final db = await DBMain.getDatabase();
-    return db.update(
-      'entrenamientos',
-      entrenamiento.toMap(),
-      where: 'id_entrenamiento = ?',
-      whereArgs: [entrenamiento.idEntrenamiento],
-    );
-  }
-
-  Future<int> deleteEntrenamiento(int id) async {
-    final db = await DBMain.getDatabase();
-    return db.delete(
-      'entrenamientos',
-      where: 'id_entrenamiento = ?',
-      whereArgs: [id],
-    );
   }
 }

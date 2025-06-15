@@ -28,6 +28,7 @@ class EntrenamientoIsometricoPage extends StatefulWidget {
 
 class EntrenamientoIsometricoPageState
     extends State<EntrenamientoIsometricoPage> {
+  // VARIABLES DE CONTROL DE ESTADO
   bool ejecucion = false;
   String boton = 'assets/icons/play.svg';
 
@@ -38,6 +39,7 @@ class EntrenamientoIsometricoPageState
 
   int time = 0;
 
+  // TEMPORIZADORES
   late double _timer;
   Timer? _countdownTimer;
 
@@ -49,6 +51,7 @@ class EntrenamientoIsometricoPageState
 
   Random random = Random();
 
+  // DATOS DEL ENTRENAMIENTO
   List<FlSpot> spots = [];
 
   List<Datos> datosGuardados = [];
@@ -62,6 +65,7 @@ class EntrenamientoIsometricoPageState
 
     _timer = widget.detalles.duracionRepeticion!;
 
+    // DETECTA CUANDO SE DESCONECTA EL BLUETOOTH
     widget.ble.conectadoNotifier.addListener(() {
       if (!widget.ble.conectadoNotifier.value) {
         if (ejecucion) {
@@ -71,6 +75,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // AÑADE NUEVO DATO AL GRÁFICO Y GUARDA
   void agregarDato(double dato) {
     setState(() {
       addNewPoint(dato / 1000);
@@ -79,6 +84,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // INICIA EL TEMPORIZADOR DE LA DURACION DE LA REPETICION ACTUAL
   Future<void> _startTimer() async {
     _countdownTimer?.cancel();
 
@@ -120,6 +126,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // FORMATEA LA FECHA Y HORA
   String formatTime(double timer) {
     int minutes = (timer / 60).floor();
     int seconds = (timer % 60).floor();
@@ -135,6 +142,7 @@ class EntrenamientoIsometricoPageState
     super.dispose();
   }
 
+  // AÑADE PUNTO AL GRAFICO
   void addNewPoint(double value) {
     setState(() {
       spots.add(FlSpot(time.toDouble(), value));
@@ -142,6 +150,8 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // GENERA LOS PUNTOS Y LINEAS PARA EL GRAFICO
+  // SI EL SEGUNDO PUNTO ESTA POR DEBAJO DEL PESO OBJETIVO SE COLOREA DE ROJO, SI ESTA POR ENCIMA, DE VERDE
   List<LineChartBarData> _colorearSegmentos() {
     List<LineChartBarData> barDataList = [];
 
@@ -177,6 +187,7 @@ class EntrenamientoIsometricoPageState
     return barDataList;
   }
 
+  // PAUSA EL ENTRENAMIENTO
   void _pauseEntrenamiento() {
     setState(() {
       boton = 'assets/icons/play.svg';
@@ -186,6 +197,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // INICIA EL ENTRENAMIENTO
   void _empezarEntrenamiento() async {
     await widget.ble.recibirDatos();
     setState(() {
@@ -196,6 +208,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // PAUSA E INICIA EL ENTRENAMIENTO, GESTIONA LOS CAMBIOS DE ICONOS Y TEMPORIZADORES
   void playPause() {
     if (!widget.ble.conectadoNotifier.value) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,6 +235,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // CUENTA ATRAS ANTES DE INICIAR ENTRENAMIENTO (5 SEGS POR DEFECTO)
   void _startCuentaAtras() {
     _cuentaAtras = 5;
 
@@ -265,12 +279,13 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // FINALIZA ENTRENAMIENTO Y VUELVE A PAGINA PRINCIPAL
   void finalizarEntrenamiento() async {
     _pauseEntrenamiento();
 
     await guardarSesionEntrenamiento();
-    
-  if (!mounted) return;
+
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('Entrenamiento finalizado')));
@@ -282,11 +297,13 @@ class EntrenamientoIsometricoPageState
     );
   }
 
+  // LIMPIA LOS PUNTOS DEL GRAFICO
   void limpiarSpots() {
     spots.clear();
     time = 0;
   }
 
+  // AVANZA REPETICION MANUALMENTE
   void avanzarRepeticionManual() {
     _pauseEntrenamiento();
     setState(() {
@@ -303,6 +320,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // AVANZA REPETICION AUTOMATICAMENTE
   void avanzarRepeticion() {
     _cuentaAtrasDescansoTemporizador?.cancel();
 
@@ -327,6 +345,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // INICIA CUENTA ATRAS DE DESCANSO
   bool _descansoActivo = false;
   void _iniciarCuentaAtrasDescanso() {
     _descansoActivo = true;
@@ -376,6 +395,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // RETROCEDE UNA REPETICION MANUALMENTE
   void retrocederRepeticionManual() {
     _pauseEntrenamiento();
     setState(() {
@@ -395,6 +415,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // AVANZA A LA SIGUIENTE SERIE MANUALMNETE
   void avanzarSerieManual() {
     _pauseEntrenamiento();
     setState(() {
@@ -408,6 +429,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // RETROCEDER UNA SERIE MANUALMENTE
   void retrocederSerieManual() {
     _pauseEntrenamiento();
     setState(() {
@@ -429,6 +451,7 @@ class EntrenamientoIsometricoPageState
     });
   }
 
+  // GUARDA LOS DATOS DEL ENTRENAMIENTO
   Future<void> guardarSesionEntrenamiento() async {
     final dbEntrenamientosDetalles = GetIt.I<DBEntrenamientosDetalles>();
     final dbDatos = GetIt.I<DBDatos>();
@@ -440,11 +463,12 @@ class EntrenamientoIsometricoPageState
     for (Datos dato in datosGuardados) {
       dato.idEntrenamientoDetalle = detallesId;
     }
-    
-  if (!mounted) return;
+
+    if (!mounted) return;
     dbDatos.insertDatos(datosGuardados, context);
   }
 
+  // GUARDA UN DATO EN UNA LISTA DE LE SERIE/REPETICION ACTUAL EN UNA LISTA QUE CONTENDRA EL ENTRENAMIENTO COMPLETO
   void guardarDatosActuales() {
     final nuevoDato = Datos(
       idEntrenamientoDetalle: null,
@@ -457,6 +481,7 @@ class EntrenamientoIsometricoPageState
     datosGuardados.add(nuevoDato);
   }
 
+  // BORRA LOS DATOS DE UNA SERIE Y REPETICIÓN
   void borrarDatosSetRep(int set, int rep) {
     datosGuardados.removeWhere(
       (d) => d.numSerie == set && d.numRepeticion == rep,
@@ -465,6 +490,7 @@ class EntrenamientoIsometricoPageState
 
   @override
   Widget build(BuildContext context) {
+    // HACE QUE EL GRAFICO SIEMPRE ENSEÑE LOS ULTIMOS 14 SEGUNDOS Y PUNTOS EN EL GRAFICO, ES DECIR, SI HAY MAS DE 14, EL GRAFICO SE VA 'MOVIENDO'
     int mostrarUltimos = 14;
 
     double xMax = spots.isNotEmpty ? spots.last.x : 0;
@@ -497,6 +523,7 @@ class EntrenamientoIsometricoPageState
       }
     }
 
+    // INTERFAZ
     return Scaffold(
       appBar: AppBarCustom(title: 'Entrenamiento'),
       body: Stack(
@@ -728,11 +755,7 @@ class EntrenamientoIsometricoPageState
                           elevation: WidgetStateProperty.all(0),
                           padding: WidgetStateProperty.all(EdgeInsets.all(0)),
                         ),
-                        child: SvgPicture.asset(
-                          boton,
-                          width: 32,
-                          height: 32,
-                        ),
+                        child: SvgPicture.asset(boton, width: 32, height: 32),
                       ),
                       IconButton(
                         icon: Icon(Icons.fast_forward),

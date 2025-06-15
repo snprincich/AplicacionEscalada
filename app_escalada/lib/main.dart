@@ -14,27 +14,32 @@ import 'package:app_escalada/services/perfil/perfil_service.dart';
 
 final GetIt locator = GetIt.instance;
 
+// SE REGISTRAN LOS SERVICIOS COMO 'SINGLETON'
 void setupLocator() {
   locator.registerLazySingleton<Ble>(() => Ble());
   locator.registerLazySingleton<DBDatos>(() => DBDatos());
   locator.registerLazySingleton<DBPerfil>(() => DBPerfil());
   locator.registerLazySingleton<DBEntrenamientos>(() => DBEntrenamientos());
-  locator.registerLazySingleton<DBEntrenamientosDetalles>(() => DBEntrenamientosDetalles());
+  locator.registerLazySingleton<DBEntrenamientosDetalles>(
+    () => DBEntrenamientosDetalles(),
+  );
   locator.registerLazySingleton<PerfilService>(() => PerfilService());
   locator.registerLazySingleton<CSVService>(() => CSVService());
-  locator.registerLazySingleton(() => ExportarService(GetIt.I<DBDatos>(), GetIt.I<CSVService>()));
+  locator.registerLazySingleton(
+    () => ExportarService(GetIt.I<DBDatos>(), GetIt.I<CSVService>()),
+  );
   locator.registerLazySingleton<AudioService>(() => AudioService());
 }
 
 void main() async {
-
   // SOLO ORIENTACION VERTICAL
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
+  // INYECTA LOS SERVICIOS
   setupLocator();
+
+  // INICIA LA APP
   runApp(const MyApp());
 }
 
@@ -48,7 +53,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: PantallaCargaPage(),
+      home: PantallaCargaPage(), // NAVEGA A LA PRIMERA PAGINA DE LA APP
     );
   }
 }

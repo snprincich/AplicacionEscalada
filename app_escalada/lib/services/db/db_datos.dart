@@ -3,6 +3,7 @@ import 'package:app_escalada/services/db/db_main.dart';
 import 'package:flutter/material.dart';
 
 class DBDatos {
+  // INSERTA UN DATO EN LA BASE DE DATOS
   Future<int> insertDato(Datos dato, BuildContext context) async {
     try {
       final db = await DBMain.getDatabase();
@@ -12,6 +13,7 @@ class DBDatos {
     }
   }
 
+  // INSERTA UNA LISTA DE DATOS EN LA BASE DE DATOS
   Future<int> insertDatos(List<Datos> listaDatos, BuildContext context) async {
     try {
       final db = await DBMain.getDatabase();
@@ -27,6 +29,7 @@ class DBDatos {
     }
   }
 
+  // OBTIENE LOS DATOS FILTRADOS POR UN ID DE 'EntrenamientoDetalles'
   Future<List<Datos>> getDatosPorDetalle(int idEntrenamientoDetalle) async {
     final db = await DBMain.getDatabase();
     final result = await db.query(
@@ -37,6 +40,7 @@ class DBDatos {
     return result.map((map) => Datos.fromMap(map)).toList();
   }
 
+  // ELIMINA UN DATO CONCRETO DE LA BASE DE DATOS
   Future<int> deleteDato(Datos dato) async {
     final db = await DBMain.getDatabase();
     return db.delete(
@@ -52,6 +56,7 @@ class DBDatos {
     );
   }
 
+  // ELIMINA TODOS LOS DATOS RELACIONADOS A UN 'EntrenamientoDetalles'
   Future<int> deleteDatosDeDetalle(int idEntrenamientoDetalle) async {
     final db = await DBMain.getDatabase();
     return db.delete(
@@ -61,6 +66,7 @@ class DBDatos {
     );
   }
 
+  // TRAE LOS DATOS FILTRADOS POR UNA LISTA DE IDS DE 'EntrenamientoDetalles'
   Future<List<Datos>> getDatosPorDetalles(List<int> idsDetalles) async {
     final db = await DBMain.getDatabase();
     if (idsDetalles.isEmpty) return [];

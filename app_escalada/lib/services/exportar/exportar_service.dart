@@ -68,7 +68,10 @@ class ExportarService {
       ]);
     }
 
-    return await _csvService.exportarCSV(data: data, nombreSugerido: nombreArchivo);
+    return await _csvService.exportarCSV(
+      data: data,
+      nombreSugerido: nombreArchivo,
+    );
   }
 
   // GENERA CSV EN STRING
@@ -129,7 +132,7 @@ class ExportarService {
     return _csvService.generarCSVString(data: data);
   }
 
-  // COMBINA LOS MODELS PARA EXPORTARLO EN UNO
+  // COMBINA LOS DIFERENTES MODELS PARA CREAR UNA LISTA UNIFICADA
   Future<List<ExportarEntrenamienoModel>> combinarParaExportar({
     required List<Entrenamiento> entrenamientos,
     required List<EntrenamientoDetalles> detalles,
@@ -140,14 +143,20 @@ class ExportarService {
     for (var dato in datos) {
       final detalle = detalles.firstWhere(
         (d) => d.idEntrenamientoDetalles == dato.idEntrenamientoDetalle,
-        orElse: () => throw Exception(
-            'Detalle no encontrado para id ${dato.idEntrenamientoDetalle}'),
+        orElse:
+            () =>
+                throw Exception(
+                  'Detalle no encontrado para id ${dato.idEntrenamientoDetalle}',
+                ),
       );
 
       final entrenamiento = entrenamientos.firstWhere(
         (e) => e.idEntrenamiento == detalle.idEntrenamiento,
-        orElse: () => throw Exception(
-            'Entrenamiento no encontrado para id ${detalle.idEntrenamiento}'),
+        orElse:
+            () =>
+                throw Exception(
+                  'Entrenamiento no encontrado para id ${detalle.idEntrenamiento}',
+                ),
       );
 
       exportList.add(
