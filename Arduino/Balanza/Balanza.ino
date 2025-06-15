@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
 #include <HX711_ADC.h>
 
-
+// PINES PARA HX711
 const int HX711_dout = 4; 
 const int HX711_sck = 5; 
 
@@ -20,18 +20,18 @@ void setup() {
   bt.begin(9600);
 
   LoadCell.begin();
-  LoadCell.setReverseOutput();
-  unsigned long stabilizingtime = 2000; 
+  LoadCell.setReverseOutput(); // INVIERTE EL PESO QUE DETECTAN LOS SENSORES. POR EJEMPLO, SI EL SENSOR DETECTA -6000 LO CAMBIA A 6000 Y VICEVERSA
+  unsigned long tiempoEstabilizacion = 2000; // ESPERA PARA QUE LOS SENSORES SE ESTABILICEN
   boolean _tare = true;
-  LoadCell.start(stabilizingtime, _tare);
+  LoadCell.start(tiempoEstabilizacion, _tare);
 
   if (LoadCell.getTareTimeoutFlag() || LoadCell.getSignalTimeoutFlag()) {
-    Serial.println("Timeout");
+    Serial.println("Tiempo de espera excedido");
     while (1);
   }
   else {
     LoadCell.setCalFactor(22.19);
-    Serial.println("Startup is complete");
+    Serial.println("Inicio completado");
   }
 
   while (!LoadCell.update());
@@ -43,14 +43,14 @@ void loop() {
   
   if (msActual - tiempoAnterior >= intervalo) {
     // Si han pasado, calcula la media
-    float averageWeight = pesoTotal / numLecturas;  // Media de las lecturas
+    float pesoMedio = pesoTotal / numLecturas;  // Media de las lecturas
     
     // Enviar la media por Bluetooth
-    bt.println(averageWeight);
+    bt.println(pesoMedio);
 
     // Imprimir la media en el monitor serial
-    Serial.print("Avg Weight: ");
-    Serial.println(averageWeight);
+    Serial.print("Peso medio: ");
+    Serial.println(pesoMedio);
 
     // Reiniciar variables
     pesoTotal = 0;
@@ -62,8 +62,8 @@ void loop() {
 
   // LEER DATOS SENSORES
   if (LoadCell.update()) {
-    float weight = LoadCell.getData();  // Obtener el peso de la LOAD CELL
-    pesoTotal += weight;                // Acumular el peso
+    float peso = LoadCell.getData();  // Obtener el peso de la LOAD CELL
+    pesoTotal += peso;                // Acumular el peso
     numLecturas++;                      // Incrementar el contador de lecturas
   }
 }
